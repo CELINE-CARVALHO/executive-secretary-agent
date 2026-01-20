@@ -23,3 +23,4 @@ def decode_jwt(token):
         current_app.config["JWT_SECRET_KEY"],
         algorithms=["HS256"],
     )
+# thieresfsec
