@@ -6,10 +6,14 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    DB_PATH = os.path.join(BASE_DIR, "..", "data", "executive_secretary.db")
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL", "sqlite:///executive_secretary.db"
+        "DATABASE_URL",
+        f"sqlite:///{DB_PATH}"
     )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -35,3 +39,5 @@ config_by_name = {
     "development": DevelopmentConfig,
     "production": ProductionConfig,
 }
+
+

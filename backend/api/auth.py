@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, redirect
-from services.auth_service import authenticate_google_user
+from backend.services.auth_service import authenticate_google_user
 import requests
 import os
 from urllib.parse import urlencode

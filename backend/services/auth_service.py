@@ -1,8 +1,8 @@
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from models.user import User
-from database.db import db
-from utils.security import generate_jwt
+from backend.models.user import User
+from backend.database.db import db
+from backend.utils.security import generate_jwt
 from flask import current_app
 
 

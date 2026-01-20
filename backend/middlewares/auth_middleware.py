@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from utils.security import decode_jwt
+from backend.utils.security import decode_jwt
 
 
 def jwt_required(func):
