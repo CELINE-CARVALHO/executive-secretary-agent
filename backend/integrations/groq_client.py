@@ -7,8 +7,14 @@ import os
 import json
 import time
 import logging
-from groq import Groq
 from typing import Dict, Any, Optional
+
+# Try-catch import for version compatibility
+try:
+    from groq import Groq
+except ImportError:
+    print("ERROR: groq library not installed. Run: pip install groq")
+    raise
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +37,26 @@ class GroqClient:
         if not self.api_key:
             raise ValueError("GROQ_API_KEY not found in environment variables")
         
-        self.client = Groq(api_key=self.api_key)
+        # Initialize Groq client with version compatibility
+        try:
+            # Try new version first
+            self.client = Groq(api_key=self.api_key)
+        except TypeError as e:
+            if 'proxies' in str(e):
+                # Fallback for older version
+                try:
+                    import httpx
+                    http_client = httpx.Client()
+                    self.client = Groq(
+                        api_key=self.api_key,
+                        http_client=http_client
+                    )
+                except Exception as fallback_error:
+                    logger.error(f"Failed to initialize Groq client: {fallback_error}")
+                    raise
+            else:
+                raise
+        
         self.model = "llama-3.3-70b-versatile"  # Best model for reasoning
         
         # Rate limiting (Groq free tier: 30 requests/minute)

@@ -1,5 +1,11 @@
+"""
+API Blueprint Registration
+"""
 from backend.api.health import health_bp
+from backend.api.auth import auth_bp
 
 
 def register_blueprints(app):
+    """Register all API blueprints"""
     app.register_blueprint(health_bp, url_prefix="/api")
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
