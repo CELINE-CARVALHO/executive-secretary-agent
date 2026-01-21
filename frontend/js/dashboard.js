@@ -625,6 +625,65 @@ class DashboardManager {
         return div.innerHTML;
     }
 }
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("processEmailBtn");
+    const output = document.getElementById("output");
+
+    btn.addEventListener("click", async () => {
+        output.textContent = "Processing...";
+
+        try {
+            const result = await processSampleEmail();
+            output.textContent = JSON.stringify(result, null, 2);
+            console.log(result);
+        } catch (err) {
+            output.textContent = "Error occurred";
+            console.error(err);
+        }
+    });
+});
+// ===============================
+// PHASE 1: REAL BACKEND INTEGRATION
+// (ADDITIVE ONLY – SAFE)
+// ===============================
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("processEmailBtn");
+    const container = document.getElementById("aiResultContainer");
+    const summaryEl = document.getElementById("aiEmailSummary");
+    const taskList = document.getElementById("aiTaskList");
+
+    if (!btn) return;
+
+    btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+
+        try {
+            const response = await apiClient.processSampleEmail();
+
+            summaryEl.textContent =
+                response.data.email_summary.summary;
+
+            taskList.innerHTML = "";
+            response.data.extracted_tasks.forEach(task => {
+                const li = document.createElement("li");
+                li.textContent = task.title;
+                taskList.appendChild(li);
+            });
+
+            container.style.display = "block";
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to process email");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Process Sample Email";
+        }
+    });
+});
+
+
 
 // Initialize dashboard
 const dashboardManager = new DashboardManager();

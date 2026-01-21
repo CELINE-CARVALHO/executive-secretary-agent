@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/components.css">
+    <script src="js/api_client.js"></script>
+    <script src="js/dashboard.js"></script>
+
 </head>
 <body>
     <div class="container">
@@ -33,6 +36,10 @@
                 </div>
             </div>
         </header>
+        <button id="processEmailBtn">Process Sample Email</button>
+
+            <pre id="output"></pre>
+
 
         <!-- Main Content -->
         <div class="main-content">
@@ -97,6 +104,28 @@
             <!-- Content Area -->
             <main class="content">
                 <!-- Overview Section -->
+                 <!-- PHASE 1: AI EMAIL PROCESSING (ADDED – DO NOT REMOVE EXISTING UI) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>AI Email Processing (Phase 1)</h3>
+                    </div>
+                    <div class="card-body">
+
+                        <button class="btn-primary" id="processEmailBtn">
+                            Process Sample Email
+                        </button>
+
+                        <div id="aiResultContainer" style="margin-top:16px; display:none;">
+                            <h4>Email Summary</h4>
+                            <p id="aiEmailSummary"></p>
+
+                            <h4>Extracted Tasks</h4>
+                            <ul id="aiTaskList"></ul>
+                        </div>
+
+                    </div>
+                </div>
+
                 <section id="overview" class="content-section active">
                     <div class="section-header">
                         <h2>Dashboard Overview</h2>

@@ -126,6 +126,16 @@ class APIClient {
         
         return response;
     }
+
+    // PHASE 1 helper – real backend call
+    async processSampleEmail() {
+        return this.post("/process-email", {
+            sender: "ceo@company.com",
+            subject: "Team meeting",
+            body: "Please schedule a team meeting tomorrow at 10am and remind me 30 minutes before."
+        });
+    }
+
     
     // Generic request method
     async request(endpoint, options = {}) {
@@ -413,6 +423,23 @@ class APIClient {
         return this.delete(`/notifications/${id}`);
     }
 }
+async function processSampleEmail() {
+    const response = await fetch("http://127.0.0.1:5000/api/process-email", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            sender: "ceo@company.com",
+            subject: "Team meeting",
+            body: "Please schedule a team meeting tomorrow at 10am and remind me 30 minutes before."
+        })
+    });
+
+    return await response.json();
+}
+
+
 
 
 
