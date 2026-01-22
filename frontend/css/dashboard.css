@@ -471,6 +471,18 @@
     color: var(--text-secondary);
 }
 
+.ai-result {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9fb;
+    border-left: 4px solid #4f46e5;
+}
+
+.email-actions {
+    margin-top: 8px;
+}
+
+
 /* Calendar View */
 .calendar-view {
     background: white;
