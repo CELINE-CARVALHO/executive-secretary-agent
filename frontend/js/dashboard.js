@@ -21,7 +21,7 @@ function formatToIST(utcString) {
 }
 
 /* -----------------------------
-   Navigation (Sidebar switching)
+   Navigation
 ------------------------------ */
 function setupNavigation() {
     document.querySelectorAll(".nav-item").forEach(item => {
@@ -49,7 +49,7 @@ function setupNavigation() {
 }
 
 /* -----------------------------
-   Email logic
+   Email actions
 ------------------------------ */
 function setupEmailActions() {
     const syncBtn = document.getElementById("syncEmailsBtn");
@@ -64,14 +64,10 @@ async function loadEmails() {
 
     try {
         const emails = await apiClient.get("/emails");
-
         updateEmailCount(emails.length);
 
         if (!emails.length) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>No emails found</p>
-                </div>`;
+            container.innerHTML = `<div class="empty-state"><p>No emails found</p></div>`;
             return;
         }
 
@@ -88,20 +84,14 @@ async function syncEmails() {
     btn.textContent = "Syncing…";
 
     try {
-        const res = await fetch("http://localhost:5000/api/emails/sync", {
+        await fetch("http://localhost:5000/api/emails/sync", {
             method: "POST",
-            credentials: "include" // REQUIRED for Flask session
+            credentials: "include"
         });
-
-        if (!res.ok) {
-            throw new Error(`Sync failed: ${res.status}`);
-        }
-
         await loadEmails();
-
     } catch (err) {
         console.error("Failed to sync emails", err);
-        alert("Failed to sync emails. Check console.");
+        alert("Failed to sync emails.");
     } finally {
         btn.disabled = false;
         btn.textContent = "Sync Emails";
@@ -109,15 +99,42 @@ async function syncEmails() {
 }
 
 /* -----------------------------
+   AI Processing
+------------------------------ */
+async function processEmailWithAI(emailId, btn) {
+    btn.disabled = true;
+    btn.textContent = "Processing…";
+
+    try {
+        const res = await fetch(
+            `http://localhost:5000/api/emails/${emailId}/process`,
+            { method: "POST" }
+        );
+
+        if (!res.ok) {
+            throw new Error("AI processing failed");
+        }
+
+        await loadEmails();
+    } catch (err) {
+        console.error(err);
+        alert("AI processing failed.");
+    }
+}
+
+/* -----------------------------
    Email Renderer
 ------------------------------ */
 function renderEmail(email) {
+    const urgency = email.urgency_level || "low";
+    const actions = email.ai_actions || [];
+
     return `
         <div class="email-item">
             <div class="email-header">
                 <strong>${email.sender}</strong>
-                <span class="urgency ${email.urgency_level || "low"}">
-                    ${email.urgency_level || "low"}
+                <span class="urgency ${urgency}">
+                    ${urgency.toUpperCase()}
                 </span>
             </div>
 
@@ -133,6 +150,35 @@ function renderEmail(email) {
                 <summary>View email</summary>
                 <pre>${email.body || "No content available"}</pre>
             </details>
+
+            <div class="email-actions">
+                <button class="btn-secondary"
+                    onclick="processEmailWithAI(${email.id}, this)">
+                    ${email.processing_status === "completed"
+                        ? "Reprocess with AI"
+                        : "Process with AI"}
+                </button>
+            </div>
+
+            ${email.ai_summary ? renderAIResult(email) : ""}
+        </div>
+    `;
+}
+
+function renderAIResult(email) {
+    const actions = email.ai_actions || [];
+
+    return `
+        <div class="ai-result">
+            <h4>AI Summary</h4>
+            <p>${email.ai_summary}</p>
+
+            ${actions.length ? `
+                <h4>Action Items</h4>
+                <ul>
+                    ${actions.map(a => `<li>${a}</li>`).join("")}
+                </ul>
+            ` : ""}
         </div>
     `;
 }
