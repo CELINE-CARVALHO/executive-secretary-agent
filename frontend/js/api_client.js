@@ -1,25 +1,33 @@
 const API_BASE = 'http://localhost:5000/api';
 
 class APIClient {
+    constructor() {
+        this.baseURL = "http://localhost:5000/api";
+    }
+
     async request(endpoint, options = {}) {
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            ...options,
-            credentials: "include",   // 🔥 REQUIRED
-            headers: {
-                "Content-Type": "application/json",
-                ...(options.headers || {})
-            }
+        const res = await fetch(this.baseURL + endpoint, {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            ...options
         });
 
-        return response.json();
+        if (!res.ok) {
+            throw new Error("API error");
+        }
+
+        return res.json();
     }
 
     get(endpoint) {
         return this.request(endpoint, { method: "GET" });
     }
 
-    getGoogleAuthURL() {
-        return this.get("/auth/google/url");
+    post(endpoint, data = {}) {
+        return this.request(endpoint, {
+            method: "POST",
+            body: JSON.stringify(data)
+        });
     }
 }
 

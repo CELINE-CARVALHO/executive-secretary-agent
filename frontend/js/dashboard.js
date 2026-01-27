@@ -119,13 +119,13 @@ async function processEmailWithAI(emailId, btn) {
 
     try {
         const res = await fetch(`/api/emails/${email.id}/process`, {
-            method: "POST",
-            credentials: "include"
+                method: "POST",
+                credentials: "include"
             });
 
         if (!res.ok) {
             throw new Error("AI processing failed");
-        }
+            }
 
         await loadEmails();
     } catch (err) {
