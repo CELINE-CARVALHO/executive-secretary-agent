@@ -64,7 +64,9 @@ async function loadEmails() {
 
     try {
         const emails = await apiClient.get("/emails");
- // ONLY if blueprint prefix is /api/emails
+
+        console.log("📦 EMAILS FROM API:", emails);
+        console.log("📦 EMAIL COUNT:", emails.length);
 
         updateEmailCount(emails.length);
 
@@ -73,12 +75,20 @@ async function loadEmails() {
             return;
         }
 
-        container.innerHTML = emails.map(renderEmail).join("");
+        container.innerHTML = "";
+
+        emails.forEach(email => {
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = renderEmail(email);
+            container.appendChild(wrapper.firstElementChild);
+        });
+
     } catch (err) {
         console.error("Email load failed", err);
         container.innerHTML = "<p>Error loading emails</p>";
     }
 }
+
 
 // async function syncEmails() {
 //     const btn = document.getElementById("syncEmailsBtn");

@@ -3,7 +3,6 @@ User Model
 """
 from datetime import datetime
 import bcrypt
-
 from backend.database.db import db
 
 
@@ -16,16 +15,14 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
 
     full_name = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), default="executive")  # executive | admin
+    role = db.Column(db.String(50), default="executive")
 
-    # OAuth tokens (encrypted in production)
+    # OAuth tokens
     gmail_token = db.Column(db.Text, nullable=True)
     calendar_token = db.Column(db.Text, nullable=True)
 
-    # Preferences (JSON string)
     preferences = db.Column(db.Text, nullable=True)
 
-    # Status & timestamps
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
@@ -45,16 +42,10 @@ class User(db.Model):
             self.password_hash.encode("utf-8")
         )
 
-    # -----------------------------
-    # Serialization
-    # -----------------------------
     def to_dict(self):
         return {
             "id": self.id,
             "email": self.email,
             "full_name": self.full_name,
             "role": self.role,
-            "is_active": self.is_active,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "last_login": self.last_login.isoformat() if self.last_login else None,
         }

@@ -6,79 +6,46 @@ from datetime import datetime
 import os
 import base64
 from bs4 import BeautifulSoup
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
-def decode_base64(data: str) -> str:
+def decode(data):
     if not data:
         return ""
-
-    missing_padding = len(data) % 4
-    if missing_padding:
-        data += "=" * (4 - missing_padding)
-
-    try:
-        return base64.urlsafe_b64decode(data).decode("utf-8", errors="ignore")
-    except Exception:
-        return ""
+    data += "=" * (-len(data) % 4)
+    return base64.urlsafe_b64decode(data).decode("utf-8", errors="ignore")
 
 
-def extract_email_body(payload: dict) -> str:
-    """
-    Extract readable email body from Gmail payload.
-    Priority:
-    1. text/plain
-    2. text/html (cleaned to text)
-    """
+def extract_body(payload):
+    if payload.get("body", {}).get("data"):
+        return decode(payload["body"]["data"])
 
-    def walk_parts(parts):
-        for part in parts:
-            mime_type = part.get("mimeType", "")
-            body = part.get("body", {})
-            data = body.get("data")
+    for part in payload.get("parts", []):
+        mime = part.get("mimeType")
+        data = part.get("body", {}).get("data")
 
-            # Prefer plain text
-            if mime_type == "text/plain" and data:
-                return decode_base64(data)
+        if mime == "text/plain" and data:
+            return decode(data)
 
-            # HTML fallback
-            if mime_type == "text/html" and data:
-                html = decode_base64(data)
-                soup = BeautifulSoup(html, "html.parser")
-                return soup.get_text(separator="\n", strip=True)
+        if mime == "text/html" and data:
+            return BeautifulSoup(decode(data), "html.parser").get_text(
+                separator="\n", strip=True
+            )
 
-            # Nested multipart
-            if part.get("parts"):
-                result = walk_parts(part["parts"])
-                if result:
-                    return result
-
-        return ""
-
-    # Single-part message
-    body_data = payload.get("body", {}).get("data")
-    if body_data:
-        return decode_base64(body_data)
-
-    # Multipart message
-    if payload.get("parts"):
-        return walk_parts(payload["parts"])
+        if part.get("parts"):
+            inner = extract_body(part)
+            if inner:
+                return inner
 
     return ""
 
 
-# -----------------------------
-# Gmail Sync
-# -----------------------------
 def fetch_gmail_emails(user):
-    """
-    Fetch latest Gmail messages for a user and store in DB
-    """
-
     if not user.gmail_token:
-        raise Exception("User has no Gmail refresh token")
+        logger.warning("No gmail token for user %s", user.id)
+        return 0
 
     creds = Credentials(
         token=None,
@@ -91,46 +58,47 @@ def fetch_gmail_emails(user):
 
     service = build("gmail", "v1", credentials=creds)
 
-    results = service.users().messages().list(
+    # 🔥 IMPORTANT: force multiple recent emails
+    result = service.users().messages().list(
         userId="me",
-        maxResults=10
+        maxResults=20,
+        includeSpamTrash=False,
     ).execute()
 
-    messages = results.get("messages", [])
+    messages = result.get("messages", [])
+    logger.info("📬 Gmail returned %s messages", len(messages))
+
     created = 0
 
     for msg in messages:
-        msg_data = service.users().messages().get(
+        msg_id = msg["id"]
+
+        if Email.query.filter_by(gmail_message_id=msg_id).first():
+            continue
+
+        full = service.users().messages().get(
             userId="me",
-            id=msg["id"],
+            id=msg_id,
             format="full"
         ).execute()
 
-        payload = msg_data.get("payload", {})
-        headers = payload.get("headers", [])
+        headers = full.get("payload", {}).get("headers", [])
 
-        def get_header(name):
-            for h in headers:
-                if h.get("name", "").lower() == name.lower():
-                    return h.get("value")
-            return None
+        def h(name):
+            return next(
+                (x["value"] for x in headers if x["name"].lower() == name.lower()),
+                None
+            )
 
-        sender = get_header("From") or "unknown"
-        subject = get_header("Subject") or "(No subject)"
-
-        # Avoid duplicates
-        if Email.query.filter_by(gmail_message_id=msg["id"]).first():
-            continue
-
-        body = extract_email_body(payload)
+        ts = int(full.get("internalDate", 0)) / 1000
 
         email = Email(
             user_id=user.id,
-            gmail_message_id=msg["id"],
-            sender=sender,
-            subject=subject,
-            body=body,
-            received_at=datetime.utcnow(),  # UTC on purpose
+            gmail_message_id=msg_id,
+            sender=h("From"),
+            subject=h("Subject"),
+            body=extract_body(full.get("payload", {})),
+            received_at=datetime.utcfromtimestamp(ts),
             processing_status="pending",
         )
 
@@ -138,4 +106,5 @@ def fetch_gmail_emails(user):
         created += 1
 
     db.session.commit()
+    logger.info("✅ Gmail sync complete | new emails inserted=%s", created)
     return created
