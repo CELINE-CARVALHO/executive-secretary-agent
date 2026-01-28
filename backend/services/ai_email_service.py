@@ -5,46 +5,48 @@ from groq import Groq
 
 
 class AIEmailService:
+    MODEL = "llama-3.1-8b-instant"
+    MAX_RETRIES = 2
 
-    def process_email(self, email):
-        result = self._run_ai(
-            subject=email.subject or "",
-            body=email.body or ""
-        )
+    # 🔥 THE ONLY PUBLIC METHOD YOU EVER CALL
+    @staticmethod
+    def process_email(email):
+        if not email.body:
+            raise ValueError("Email body is empty")
+
+        subject = email.subject or "(No Subject)"
+        body = email.body.strip()
+
+        result = AIEmailService._run_ai(subject, body)
 
         email.ai_summary = result["summary"]
         email.urgency_level = result["urgency"]
         email.category = result["category"]
-        email.ai_actions = json.dumps(result.get("actions", []))
-        email.ai_deadline = result.get("deadline")
+        email.ai_actions = json.dumps(result["actions"])
+        email.ai_deadline = result["deadline"]
 
-    """
-    Single responsibility:
-    Convert email → structured intelligence
-    """
-
-    MODEL = "llama-3.1-8b-instant"
-    MAX_RETRIES = 2
-
+    # -----------------------------
+    # INTERNAL AI CALL
+    # -----------------------------
     @classmethod
-    def _get_client(cls) -> Groq:
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            raise RuntimeError("GROQ_API_KEY environment variable not set")
-        return Groq(api_key=api_key)
-
-    @classmethod
-    def process_email(cls, subject: str, body: str) -> dict:
+    def _run_ai(cls, subject: str, body: str) -> dict:
         prompt = cls._build_prompt(subject, body)
         client = cls._get_client()
 
         for _ in range(cls.MAX_RETRIES):
-            response_text = cls._call_llm(client, prompt)
-            parsed = cls._parse_response(response_text)
+            response = cls._call_llm(client, prompt)
+            parsed = cls._parse_response(response)
             if parsed:
                 return parsed
 
         raise ValueError("AI failed to return valid structured JSON")
+
+    @staticmethod
+    def _get_client():
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise RuntimeError("GROQ_API_KEY not set")
+        return Groq(api_key=api_key)
 
     # -----------------------------
     # PROMPT
@@ -54,16 +56,17 @@ class AIEmailService:
         return f"""
 You are an executive email intelligence system.
 
-Rules:
+STRICT RULES:
 - Output ONLY valid JSON
 - No markdown
 - No explanations
-- No extra text
+- Always return all fields
+- If the email is one line, summary MUST repeat it
 
-Return EXACTLY this schema:
+Return EXACTLY this JSON:
 
 {{
-  "summary": "2-4 line executive summary",
+  "summary": "string",
   "urgency": "low|medium|high",
   "category": "meeting|task|academic|finance|personal|info|spam",
   "actions": [],
@@ -81,7 +84,7 @@ EMAIL BODY:
     # LLM CALL
     # -----------------------------
     @staticmethod
-    def _call_llm(client: Groq, prompt: str) -> str:
+    def _call_llm(client, prompt: str) -> str:
         completion = client.chat.completions.create(
             model=AIEmailService.MODEL,
             messages=[
@@ -96,10 +99,10 @@ EMAIL BODY:
     # VALIDATION
     # -----------------------------
     @staticmethod
-    def _parse_response(text: str) -> dict | None:
+    def _parse_response(text: str):
         try:
             data = json.loads(text)
-        except json.JSONDecodeError:
+        except Exception:
             return None
 
         required = {"summary", "urgency", "category", "actions", "deadline"}
@@ -119,20 +122,3 @@ EMAIL BODY:
                 data["deadline"] = None
 
         return data
-    
-
-from backend.models.email import Email
-from backend.database.db import db
-
-def retry_failed_ai_emails():
-    failed = Email.query.filter_by(processing_status="failed").all()
-
-    for email in failed:
-        try:
-            process_email(email)
-            email.processing_status = "completed"
-        except Exception:
-            email.processing_status = "failed"
-
-    db.session.commit()
-

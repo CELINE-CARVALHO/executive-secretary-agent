@@ -1,82 +1,107 @@
+/* ===================================
+   Calendar Specific Styles
+   =================================== */
+
+/* Note: Main calendar styles are in dashboard.css
+   This file contains additional calendar-specific styles */
+
 .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-3);
 }
 
 .calendar-event {
-  padding: 10px;
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    position: relative;
+    overflow: hidden;
+    color: #000000
 }
 
-.priority-high { background: #dc2626; }
-.priority-medium { background: #f59e0b; }
-.priority-low { background: #16a34a; }
-
-.status-completed {
-  opacity: 0.6;
-  text-decoration: line-through;
+.calendar-event::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    
 }
 
-.calendar-view {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.calendar-event.priority-high {
+    background: linear-gradient(135deg, var(--danger-50) 0%, var(--danger-100) 100%);
+    color: var(--danger-900);
 }
 
-.calendar-event {
-    padding: 12px;
-    border-radius: 8px;
-    color: white;
+.calendar-event.priority-high::before {
+    background: var(--danger-500);
 }
 
-.priority-high { background: #dc2626; }
-.priority-medium { background: #f59e0b; }
-.priority-low { background: #16a34a; }
+.calendar-event.priority-medium {
+    background: linear-gradient(135deg, var(--warning-50) 0%, var(--warning-100) 100%);
+    color: var(--warning-900);
+}
 
-.completed {
+.calendar-event.priority-medium::before {
+    background: var(--warning-500);
+}
+
+.calendar-event.priority-low {
+    background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%);
+    color: var(--success-900);
+}
+
+.calendar-event.priority-low::before {
+    background: var(--success-500);
+}
+
+.calendar-event.status-completed,
+.calendar-event.completed {
     opacity: 0.6;
+}
+
+.calendar-event.status-completed strong,
+.calendar-event.completed strong {
     text-decoration: line-through;
 }
 
-.status-badge {
-    display: inline-block;
-    margin-top: 6px;
-    font-size: 12px;
-}
-
+/* Additional calendar day styles */
 .calendar-day {
-    margin-bottom: 20px;
+    margin-bottom: var(--space-8);
 }
 
-.calendar-day h4 {
-    margin-bottom: 8px;
-    color: #444;
+.calendar-day:last-child {
+    margin-bottom: 0;
 }
 
-.calendar-event {
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    color: white;
+/* Calendar event content */
+.calendar-event-time {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-1);
+    color: #000000
 }
 
-.priority-high { background: #dc2626; }
-.priority-medium { background: #f59e0b; }
-.priority-low { background: #16a34a; }
-
-.completed {
-    opacity: 0.6;
-    text-decoration: line-through;
+.calendar-event-title {
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+    color: #000000
 }
 
-.btn-link {
-    background: none;
-    border: none;
-    color: #e5e7eb;
-    cursor: pointer;
-    font-size: 12px;
-    padding: 0;
+.calendar-event-meta {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: #000000
+}
+
+/* Responsive calendar */
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: 1fr;
+    }
 }

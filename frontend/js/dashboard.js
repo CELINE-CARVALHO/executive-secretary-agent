@@ -1,9 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     setupNavigation();
     setupEmailActions();
-    loadEmails(); // 🔥 THIS IS IMPORTANT
+    loadEmails();
 });
-
 
 /* -----------------------------
    Time helpers (UTC → IST)
@@ -66,8 +65,6 @@ async function loadEmails() {
 
     try {
         const emails = await apiClient.get("/emails");
-
-        console.log("📦 EMAILS FROM API:", emails);
         updateEmailCount(emails.length);
 
         if (!emails.length) {
@@ -109,51 +106,23 @@ async function syncEmails() {
     }
 }
 
-
 /* -----------------------------
-   AI Processing
------------------------------- */
-async function processEmailWithAI(emailId, btn) {
-    btn.disabled = true;
-    btn.textContent = "Processing…";
-
-    try {
-        const res = await fetch(`/api/emails/${emailId}/process`, {
-            method: "POST",
-            credentials: "include"
-        });
-
-        if (!res.ok) throw new Error("AI processing failed");
-        await loadEmails();
-
-    } catch (err) {
-        console.error(err);
-        alert("AI processing failed.");
-    }
-}
-
-/* -----------------------------
-   Email Renderer (FIXED)
+   Email Renderer (FINAL)
 ------------------------------ */
 function renderEmail(email) {
     const urgency = email.urgency_level || "low";
-    const category = email.category || "—";
+    const category = email.category || "info";
 
-    let aiSummaryHtml = "⏳ Processing…";
+    const INVALID_SUMMARIES = [
+        "AI processing failed",
+        "❌ AI processing failed"
+    ];
 
-    if (email.processing_status === "completed") {
-        aiSummaryHtml = email.ai_summary || "No summary generated";
-    } 
-    else if (email.processing_status === "failed") {
-        aiSummaryHtml = "❌ AI processing failed";
-    }
-    else if (
-        email.processing_status === "processing" &&
-        email.ai_summary
-    ) {
-        aiSummaryHtml = email.ai_summary;
-    }
-
+    const summary =
+        email.ai_summary &&
+        !INVALID_SUMMARIES.includes(email.ai_summary.trim())
+            ? email.ai_summary
+            : (email.body || email.subject || "(No content)");
 
     return `
         <div class="email-item">
@@ -179,7 +148,7 @@ function renderEmail(email) {
 
             <div class="ai-section">
                 <h4>AI Summary</h4>
-                <p>${aiSummaryHtml}</p>
+                <p>${summary}</p>
             </div>
 
             <div class="email-actions">
@@ -196,36 +165,6 @@ function renderEmail(email) {
         </div>
     `;
 }
-
-/* -----------------------------
-   Tasks
------------------------------- */
-function renderTask(task) {
-    let badge = "";
-
-    if (task.status === "completed") {
-        badge = `<span class="badge badge-completed">COMPLETED</span>`;
-    } else {
-        badge = `<span class="badge badge-approved">APPROVED</span>`;
-    }
-
-    return `
-      <div class="task-item">
-        <strong>${task.title}</strong>
-        ${badge}
-        <p>Priority: ${task.priority}</p>
-
-        ${
-          task.status !== "completed"
-            ? `<button onclick="markCompleted(${task.id})">
-                Mark Completed
-               </button>`
-            : ""
-        }
-      </div>
-    `;
-}
-
 
 /* -----------------------------
    Actions
@@ -251,6 +190,9 @@ async function rejectEmail(emailId) {
 }
 
 function updateEmailCount(count) {
-    const badge = document.getElementById("emailCount");
-    if (badge) badge.textContent = count;
+    const sidebarBadge = document.getElementById("emailCount");
+    if (sidebarBadge) sidebarBadge.textContent = count;
+
+    const statCard = document.getElementById("statEmails");
+    if (statCard) statCard.textContent = count;
 }
