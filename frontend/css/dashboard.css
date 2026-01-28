@@ -688,3 +688,29 @@
 .dropdown-menu.show {
     display: block;
 }
+
+body,
+body * {
+    color: #000000 !important;
+}
+
+/* Allow intentional white text */
+.nav-item.active,
+.nav-item.active *,
+.action-btn:hover,
+.action-btn:hover *,
+.badge.high,
+.badge.pending,
+.badge.urgency.high,
+.btn-icon .badge {
+    color: #ffffff !important;
+}
+
+#tasks p,
+#tasks span,
+.tasks-list p,
+.tasks-list span {
+    color: #000000 !important;
+}
+
+

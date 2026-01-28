@@ -515,3 +515,26 @@ button:focus-visible,
         gap: var(--space-3);
     }
 }
+
+body,
+body * {
+    color: #000000 !important;
+}
+
+/* Preserve intentional white text */
+.btn-primary,
+.btn-primary *,
+.btn-success,
+.btn-success *,
+.btn-danger,
+.btn-danger *,
+.priority-badge.priority-high,
+.nav-item.active,
+.nav-item.active *,
+.action-btn:hover,
+.action-btn:hover *,
+.badge.high,
+.badge.pending,
+.badge.urgency.high {
+    color: #ffffff !important;
+}

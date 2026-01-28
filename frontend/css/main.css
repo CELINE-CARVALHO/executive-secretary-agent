@@ -573,3 +573,79 @@ pre,
 code {
     color: #000000 !important;
 }
+
+/* ===================================
+   FINAL TEXT COLOR ENFORCEMENT
+   =================================== */
+
+body,
+body * {
+    color: #000000 !important;
+}
+
+/* Preserve intentional non-black text */
+
+/* Secondary / muted text */
+.subtitle,
+.email-meta,
+.task-meta,
+.calendar-meta,
+.help-text,
+.setting-info p,
+.ai-reasoning,
+.stat-label,
+.empty-state p {
+    color: #525252 !important;
+}
+
+/* Navigation */
+.nav-item {
+    color: #525252 !important;
+}
+
+.nav-item.active,
+.nav-item.active * {
+    color: #ffffff !important;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-primary *,
+.btn-danger,
+.btn-danger *,
+.btn-success,
+.btn-success * {
+    color: #ffffff !important;
+}
+
+.btn-secondary,
+.btn-secondary *,
+.action-btn,
+.action-btn * {
+    color: #000000 !important;
+}
+
+/* Badges */
+.badge.urgency.high,
+.badge.pending,
+.nav-item .count.pending,
+.nav-item.active .count {
+    color: #ffffff !important;
+}
+
+/* Icons / close buttons */
+.toast-close,
+.modal-close {
+    color: #737373 !important;
+}
+
+.toast-close:hover,
+.modal-close:hover {
+    color: #000000 !important;
+}
+
+/* Placeholders */
+input::placeholder,
+textarea::placeholder {
+    color: #ffffff !important;
+}
